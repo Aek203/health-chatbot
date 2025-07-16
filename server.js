@@ -21,6 +21,13 @@ app.get('/', (req, res) => {
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') return;
   const userText = event.message.text;
+try {
+  const response = await openai.createChatCompletion({ ... });
+  // ใช้งาน response.data.choices[0].message.content
+} catch (error) {
+  console.error('❌ ERROR FROM OPENAI:', error.response?.data || error.message);
+  res.status(500).send('เกิดข้อผิดพลาดในการประมวลผลคำถาม');
+}
 
   try {
     const aiRes = await axios.post(
