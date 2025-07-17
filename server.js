@@ -40,21 +40,23 @@ async function handleEvent(event) {
   try {
     // เรียก OpenAI API
     const aiRes = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'You are a helpful health assistant.' },
-          { role: 'user', content: userText }
-        ]
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+  "https://openrouter.ai/api/v1/chat/completions",
+  {
+    model: "meta-llama/llama-3-70b-instruct", // ใช้โมเดลฟรีที่เก่งใกล้เคียง GPT-4
+    messages: [
+      { role: "system", content: "You are a helpful health assistant." },
+      { role: "user", content: userText }
+    ]
+  },
+  {
+    headers: {
+      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json"
+    }
+  }
+);
+
+   
 
     const aiText = aiRes.data.choices[0].message.content;
 
