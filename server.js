@@ -39,10 +39,10 @@ async function handleEvent(event) {
 
   try {
     // เรียก OpenAI API
-    const aiRes = await axios.post(
+ const aiRes = await axios.post(
   "https://openrouter.ai/api/v1/chat/completions",
   {
-    model: "meta-llama/llama-3-70b-instruct", // ใช้โมเดลฟรีที่เก่งใกล้เคียง GPT-4
+    model: "openai/gpt-3.5-turbo",  // หรือใช้ claude/gemma/gpt-4 แล้วแต่ที่รองรับ
     messages: [
       { role: "system", content: "You are a helpful health assistant." },
       { role: "user", content: userText }
@@ -50,8 +50,10 @@ async function handleEvent(event) {
   },
   {
     headers: {
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json"
+      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://yourusername.github.io",   // แก้เป็นเว็บของคุณหรือ GitHub
+      "X-Title": "LINE Health Chatbot"
     }
   }
 );
