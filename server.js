@@ -14,25 +14,18 @@ const config = {
 
 const client = new line.Client(config);
 
-// ✅ ใช้ express.raw() เพื่อรองรับ signature จาก LINE
-app.post('/webhook',
-  express.raw({ type: 'application/json' }),
-  line.middleware(config),
-  async (req, res) => {
-    try {
-      const body = JSON.parse(req.body.toString());
-      const events = body.events;
-
-      await Promise.all(events.map(handleEvent));
-      res.sendStatus(200);
-    } catch (err) {
-      console.error('❌ Webhook Error:', err);
-      res.sendStatus(500);
-    }
+// ✅ ใช้ LINE middleware ตามปกติ
+app.post('/webhook', line.middleware(config), async (req, res) => {
+  try {
+    const events = req.body.events;
+    await Promise.all(events.map(handleEvent));
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('❌ Webhook Error:', err);
+    res.sendStatus(500);
   }
-);
+});
 
-// ✅ หน้า root เช็กเซิร์ฟเวอร์
 app.get('/', (req, res) => {
   res.send('🤖 Health Chatbot is running.');
 });
@@ -47,7 +40,7 @@ async function handleEvent(event) {
     const aiRes = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'anthropic/claude-3-haiku', // คุณสามารถเปลี่ยนเป็น gpt-3.5, mistral ฯลฯ
+        model: 'anthropic/claude-3-haiku',
         messages: [
           { role: 'system', content: 'You are a helpful health assistant.' },
           { role: 'user', content: userText }
@@ -57,7 +50,7 @@ async function handleEvent(event) {
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://health-chatbot-9uc4.onrender.com', // ✅ ใช้ URL จาก Render
+          'HTTP-Referer': 'https://health-chatbot-9uc4.onrender.com',
           'X-Title': 'LINE Health Chatbot'
         }
       }
@@ -83,7 +76,6 @@ async function handleEvent(event) {
   }
 }
 
-// ===== เริ่มเซิร์ฟเวอร์ =====
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`🚀 Server listening on port ${port}`);
