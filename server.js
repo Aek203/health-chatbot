@@ -41,7 +41,7 @@ async function handleEvent(event) {
  const aiRes = await axios.post(
   "https://openrouter.ai/api/v1/chat/completions",
   {
-    model: "openai/gpt-3.5-turbo",  // หรือใช้ claude/gemma/gpt-4 แล้วแต่ที่รองรับ
+    model: "anthropic/claude-3-haiku",  // หรือใช้ claude/gemma/gpt-4 แล้วแต่ที่รองรับ
     messages: [
       { role: "system", content: "You are a helpful health assistant." },
       { role: "user", content: userText }
