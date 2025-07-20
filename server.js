@@ -52,7 +52,7 @@ async function handleEvent(event) {
     headers: {
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://yourusername.github.io",   // แก้เป็นเว็บของคุณหรือ GitHub
+      "HTTP-Referer": "https://health-chatbot-9uc4.onrender.com",   // แก้เป็นเว็บของคุณหรือ GitHub
       "X-Title": "LINE Health Chatbot"
     }
   }
