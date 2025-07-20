@@ -1,4 +1,3 @@
-// เรียก dotenv เพื่อโหลดตัวแปรจาก .env
 require('dotenv').config();
 
 const express = require('express');
