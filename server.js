@@ -1,3 +1,6 @@
+console.log("🌍 ENV:", {
+  token: process.env.OPENROUTER_API_KEY
+});
 require('dotenv').config();
 
 const express = require('express');
