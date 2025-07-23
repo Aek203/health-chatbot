@@ -53,8 +53,8 @@ async function handleEvent(event) {
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://health-chatbot-9uc4.onrender.com',
-          'X-Title': 'LINE Health Chatbot'
+          //'HTTP-Referer': 'https://health-chatbot-9uc4.onrender.com',
+          //'X-Title': 'LINE Health Chatbot'
         }
       }
     );
