@@ -1,7 +1,4 @@
-console.log("🌍 ENV:", {
-  token: process.env.OPENROUTER_API_KEY
-});
-require('dotenv').config();
+require('dotenv').config(); // ✅ ต้องอยู่ก่อนการใช้ process.env
 
 const express = require('express');
 const line = require('@line/bot-sdk');
@@ -9,15 +6,15 @@ const axios = require('axios');
 
 const app = express();
 
-// ===== LINE CONFIG =====
+// === LINE CONFIG ===
 const config = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.CHANNEL_SECRET,
+  channelSecret: process.env.CHANNEL_SECRET
 };
 
 const client = new line.Client(config);
 
-// ✅ ใช้ LINE middleware ตามปกติ
+// === LINE WEBHOOK ===
 app.post('/webhook', line.middleware(config), async (req, res) => {
   try {
     const events = req.body.events;
@@ -29,11 +26,12 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
   }
 });
 
+// === CHECK SERVER ===
 app.get('/', (req, res) => {
   res.send('🤖 Health Chatbot is running.');
 });
 
-// ===== ฟังก์ชันตอบกลับข้อความด้วย OpenRouter API =====
+// === HANDLE EVENT ===
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') return;
 
@@ -43,7 +41,7 @@ async function handleEvent(event) {
     const aiRes = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'anthropic/claude-3-haiku',
+        model: 'anthropic/claude-3-haiku', // หรือใช้ openai/gpt-3.5-turbo
         messages: [
           { role: 'system', content: 'You are a helpful health assistant.' },
           { role: 'user', content: userText }
@@ -53,8 +51,8 @@ async function handleEvent(event) {
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          //'HTTP-Referer': 'https://health-chatbot-9uc4.onrender.com',
-          //'X-Title': 'LINE Health Chatbot'
+          'HTTP-Referer': 'https://yourusername.github.io', // 🔁 เปลี่ยนเป็น GitHub ของคุณ
+          'X-Title': 'LINE Health Chatbot'
         }
       }
     );
@@ -65,6 +63,7 @@ async function handleEvent(event) {
       type: 'text',
       text: aiText
     });
+
   } catch (err) {
     if (err.response) {
       console.error('📡 OpenRouter API Error:', err.response.status, err.response.data);
