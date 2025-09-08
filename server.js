@@ -5,16 +5,22 @@ const axios = require('axios');
 
 const app = express();
 
-// ✅ ต้องใช้ raw body เฉพาะ Webhook เท่านั้น
 app.post('/webhook',
   express.raw({ type: '*/*' }),
-  line.middleware({
-    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-    channelSecret: process.env.CHANNEL_SECRET,
-  }),
+  (req, res, next) => {
+    try {
+      // 👇 แปลง Buffer เป็น JSON
+      req.body = JSON.parse(req.body.toString());
+      next();
+    } catch (err) {
+      console.error('❌ Webhook JSON parse error:', err);
+      return res.sendStatus(400);
+    }
+  },
+  line.middleware(config),
   async (req, res) => {
     try {
-      const events = JSON.parse(req.body.toString()).events;
+      const events = req.body.events;
       await Promise.all(events.map(handleEvent));
       res.sendStatus(200);
     } catch (err) {
@@ -23,6 +29,7 @@ app.post('/webhook',
     }
   }
 );
+
 
 // ✅ JSON middleware สำหรับ path อื่นๆ
 app.use(express.json());
