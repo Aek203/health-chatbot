@@ -57,7 +57,7 @@ async function handleEvent(event) {
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://yourusername.github.io',
+          'HTTP-Referer': 'https://github.com/Aek203',
           'X-Title': 'LINE Health Chatbot'
         }
       }
