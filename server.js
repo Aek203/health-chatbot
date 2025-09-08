@@ -1,20 +1,19 @@
-require('dotenv').config(); // ✅ ต้องอยู่ก่อนการใช้ process.env
-
+require('dotenv').config();
 const express = require('express');
 const line = require('@line/bot-sdk');
 const axios = require('axios');
 
 const app = express();
+app.use(express.json());
 
-// === LINE CONFIG ===
+// ===== LINE CONFIG =====
 const config = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.CHANNEL_SECRET
+  channelSecret: process.env.CHANNEL_SECRET,
 };
-
 const client = new line.Client(config);
 
-// === LINE WEBHOOK ===
+// ===== WEBHOOK =====
 app.post('/webhook', line.middleware(config), async (req, res) => {
   try {
     const events = req.body.events;
@@ -26,22 +25,29 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
   }
 });
 
-// === CHECK SERVER ===
 app.get('/', (req, res) => {
   res.send('🤖 Health Chatbot is running.');
 });
 
-// === HANDLE EVENT ===
+// ===== ฟังก์ชันหลัก =====
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') return;
 
   const userText = event.message.text;
+  const replyToken = event.replyToken;
 
   try {
+    // 👉 ส่งคำถามไปเก็บที่ Google Sheet ก่อน
+    await axios.post(process.env.APPS_SCRIPT_URL, {
+      question: userText,
+      timestamp: new Date().toISOString()
+    });
+
+    // 👉 เรียก AI ผ่าน OpenRouter
     const aiRes = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'anthropic/claude-3-haiku', // หรือใช้ openai/gpt-3.5-turbo
+        model: 'meta-llama/llama-3-70b-instruct',
         messages: [
           { role: 'system', content: 'You are a helpful health assistant.' },
           { role: 'user', content: userText }
@@ -51,7 +57,7 @@ async function handleEvent(event) {
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://github.com/Aek203', // 🔁 เปลี่ยนเป็น GitHub ของคุณ
+          'HTTP-Referer': 'https://yourusername.github.io',
           'X-Title': 'LINE Health Chatbot'
         }
       }
@@ -59,7 +65,7 @@ async function handleEvent(event) {
 
     const aiText = aiRes.data.choices[0].message.content;
 
-    await client.replyMessage(event.replyToken, {
+    await client.replyMessage(replyToken, {
       type: 'text',
       text: aiText
     });
@@ -71,7 +77,7 @@ async function handleEvent(event) {
       console.error('❌ Other Error:', err.message);
     }
 
-    await client.replyMessage(event.replyToken, {
+    await client.replyMessage(replyToken, {
       type: 'text',
       text: 'ขออภัย เกิดข้อผิดพลาดในการประมวลผลคำถามของคุณ'
     });
