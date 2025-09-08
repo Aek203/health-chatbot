@@ -5,11 +5,20 @@ const axios = require('axios');
 
 const app = express();
 
-app.post('/webhook',
+// ✅ ประกาศ config ก่อนใช้
+const config = {
+  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.CHANNEL_SECRET,
+};
+
+const client = new line.Client(config);
+
+// ✅ middleware ใช้หลัง config ถูกประกาศ
+app.post(
+  '/webhook',
   express.raw({ type: '*/*' }),
   (req, res, next) => {
     try {
-      // 👇 แปลง Buffer เป็น JSON
       req.body = JSON.parse(req.body.toString());
       next();
     } catch (err) {
@@ -29,6 +38,8 @@ app.post('/webhook',
     }
   }
 );
+
+// ...โค้ดอื่นเหมือนเดิม เช่น handleEvent(), app.listen()...
 
 
 // ✅ JSON middleware สำหรับ path อื่นๆ
