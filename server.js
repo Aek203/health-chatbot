@@ -5,52 +5,33 @@ const axios = require('axios');
 
 const app = express();
 
-// ✅ ประกาศ config ก่อนใช้
+// ===== LINE CONFIG =====
 const config = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
   channelSecret: process.env.CHANNEL_SECRET,
 };
-
 const client = new line.Client(config);
 
-// ✅ middleware ใช้หลัง config ถูกประกาศ
-app.post(
-  '/webhook',
-  express.raw({ type: '*/*' }),
-  (req, res, next) => {
-    try {
-      req.body = JSON.parse(req.body.toString());
-      next();
-    } catch (err) {
-      console.error('❌ Webhook JSON parse error:', err);
-      return res.sendStatus(400);
-    }
-  },
-  line.middleware(config),
-  async (req, res) => {
-    try {
-      const events = req.body.events;
-      await Promise.all(events.map(handleEvent));
-      res.sendStatus(200);
-    } catch (err) {
-      console.error('❌ Webhook Error:', err);
-      res.sendStatus(500);
-    }
+// ✅ LINE Webhook ต้องใช้ raw body เพื่อ validate signature
+app.post('/webhook', express.raw({ type: '*/*' }), line.middleware(config), async (req, res) => {
+  try {
+    const events = JSON.parse(req.body.toString()).events;  // ✅ แปลง body ทีหลัง
+    await Promise.all(events.map(handleEvent));
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('❌ Webhook Error:', err);
+    res.sendStatus(500);
   }
-);
+});
 
-// ...โค้ดอื่นเหมือนเดิม เช่น handleEvent(), app.listen()...
-
-
-// ✅ JSON middleware สำหรับ path อื่นๆ
+// ✅ Middleware JSON ใช้กับ path อื่น (เช่น /api, /)
 app.use(express.json());
 
-// ✅ เช็กสถานะ
 app.get('/', (req, res) => {
   res.send('🤖 Health Chatbot is running.');
 });
 
-// ===== ฟังก์ชันหลัก =====
+// ===== MAIN FUNCTION =====
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') return;
 
@@ -58,13 +39,13 @@ async function handleEvent(event) {
   const replyToken = event.replyToken;
 
   try {
-    // 👉 1. บันทึกคำถามลง Google Sheets
+    // 1. ส่งคำถามไปเก็บที่ Google Sheet
     await axios.post(process.env.APPS_SCRIPT_URL, {
       question: userText,
       timestamp: new Date().toISOString()
     });
 
-    // 👉 2. ขอคำตอบจาก AI (OpenRouter)
+    // 2. ขอคำตอบจาก AI (OpenRouter)
     const aiRes = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
@@ -78,7 +59,7 @@ async function handleEvent(event) {
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://github.com/Aek203', // เปลี่ยนเป็นของคุณเองถ้าใช้ GitHub
+          'HTTP-Referer': 'https://github.com/Aek203',
           'X-Title': 'LINE Health Chatbot'
         }
       }
@@ -86,11 +67,8 @@ async function handleEvent(event) {
 
     const aiText = aiRes.data.choices[0].message.content;
 
-    // 👉 3. ตอบกลับผู้ใช้ใน LINE
-    await new line.Client({
-      channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-      channelSecret: process.env.CHANNEL_SECRET,
-    }).replyMessage(replyToken, {
+    // 3. ตอบกลับผู้ใช้ใน LINE
+    await client.replyMessage(replyToken, {
       type: 'text',
       text: aiText
     });
@@ -105,7 +83,7 @@ async function handleEvent(event) {
   }
 }
 
-// ✅ เริ่มเซิร์ฟเวอร์
+// ✅ START SERVER
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`🚀 Server listening on port ${port}`);
